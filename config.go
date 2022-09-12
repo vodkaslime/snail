@@ -1,4 +1,4 @@
-package main
+package snail
 
 type Config struct {
 	TableSize int

@@ -1,4 +1,4 @@
-package main
+package snail
 
 import (
 	"bytes"
@@ -11,17 +11,19 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vodkaslime/snail/utils"
 )
 
-const TestWordCount int = 10000000
+const TestWordCount int = 1000000
 const TestTableSize int = 1000
+const TestFilePath string = "./test.db"
 
 type Verify struct {
 	words []string
 	ptr   int
 }
 
-func ReadAndVerify(
+func readAndVerify(
 	r io.Reader,
 	v *Verify,
 	isMemTable bool,
@@ -34,7 +36,7 @@ func ReadAndVerify(
 			if errors.Is(err, io.EOF) {
 				break
 			} else {
-				assert.Empty(t, err.Error())
+				assert.Nil(t, err.Error())
 			}
 		}
 
@@ -44,7 +46,7 @@ func ReadAndVerify(
 			if isMemTable {
 				break
 			} else {
-				assert.Empty(t, "reading 0 in word len in file")
+				assert.Nil(t, "reading 0 in word len in file")
 			}
 		}
 
@@ -54,7 +56,7 @@ func ReadAndVerify(
 			if errors.Is(err, io.EOF) {
 				break
 			} else {
-				assert.Empty(t, err.Error())
+				assert.Nil(t, err.Error())
 			}
 		}
 
@@ -63,10 +65,20 @@ func ReadAndVerify(
 		v.ptr += 1
 	}
 }
+
 func TestFS(t *testing.T) {
+
+	err := utils.ClearFile(TestFilePath)
+	assert.Nil(t, err)
+
+	defer func() {
+		err = utils.ClearFile(TestFilePath)
+		assert.Nil(t, err)
+	}()
+
 	cfg := Config{
 		TableSize: TestTableSize,
-		FilePath:  "./test.db",
+		FilePath:  TestFilePath,
 	}
 	fs := NewLocalFS(&cfg)
 
@@ -92,7 +104,7 @@ func TestFS(t *testing.T) {
 		b := []byte(w)
 		_, err := fs.Write(&b)
 		if err != nil {
-			assert.Empty(t, err.Error())
+			assert.Nil(t, err.Error())
 		}
 	}
 
@@ -101,29 +113,29 @@ func TestFS(t *testing.T) {
 	// Read and verify
 	println("trying to read from disk")
 	start = time.Now()
-	fstat, err := os.Stat(cfg.FilePath)
+	fstat, err := os.Stat(TestFilePath)
 	if err != nil && !errors.Is(err, os.ErrExist) {
-		assert.Empty(t, err.Error())
+		assert.Nil(t, err.Error())
 	}
 
 	// Verify words in file
-	f, err := os.Open(cfg.FilePath)
+	f, err := os.Open(TestFilePath)
 	if err != nil {
-		assert.Empty(t, err.Error())
+		assert.Nil(t, err.Error())
 	}
 	fBuf := make([]byte, fstat.Size())
 	_, err = f.Read(fBuf)
 	if err != nil {
-		assert.Empty(t, "error reading from file to fbuf")
+		assert.Nil(t, "error reading from file to fbuf")
 	}
 	println("read from disk took time " + time.Since(start).String())
 	fReader := bytes.NewReader(fBuf)
-	ReadAndVerify(fReader, &v, false, t)
+	readAndVerify(fReader, &v, false, t)
 
 	// Verify words in memory
 	println("trying to read from mem")
 	bReader := bytes.NewReader(fs.table.buf)
-	ReadAndVerify(bReader, &v, true, t)
+	readAndVerify(bReader, &v, true, t)
 	println("read and verify took time " + time.Since(start).String())
 
 	assert.Equal(t, len(v.words), v.ptr)
