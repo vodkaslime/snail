@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/vodkaslime/snail/utils"
@@ -94,8 +93,6 @@ func TestFS(t *testing.T) {
 	}
 
 	// Write to the FS
-	println("writing to fs")
-	start := time.Now()
 	for i := 0; i < TestWordCount; i++ {
 		w := wordsPool[rand.Intn(len(wordsPool))]
 
@@ -108,11 +105,7 @@ func TestFS(t *testing.T) {
 		}
 	}
 
-	println("write took time " + time.Since(start).String())
-
 	// Read and verify
-	println("trying to read from disk")
-	start = time.Now()
 	fstat, err := os.Stat(TestFilePath)
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		assert.Nil(t, err.Error())
@@ -128,15 +121,12 @@ func TestFS(t *testing.T) {
 	if err != nil {
 		assert.Nil(t, "error reading from file to fbuf")
 	}
-	println("read from disk took time " + time.Since(start).String())
 	fReader := bytes.NewReader(fBuf)
 	readAndVerify(fReader, &v, false, t)
 
 	// Verify words in memory
-	println("trying to read from mem")
 	bReader := bytes.NewReader(fs.table.buf)
 	readAndVerify(bReader, &v, true, t)
-	println("read and verify took time " + time.Since(start).String())
 
 	assert.Equal(t, len(v.words), v.ptr)
 }

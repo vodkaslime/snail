@@ -20,7 +20,7 @@ func benchTestCase(tableSize int) error {
 
 	cfg := snail.Config{
 		TableSize: tableSize,
-		FilePath:  "./test.db",
+		FilePath:  BenchTestFilePath,
 	}
 	fs := snail.NewLocalFS(&cfg)
 
