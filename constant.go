@@ -1,4 +1,4 @@
-package main
+package snail
 
 const BLOCKSIZE int = 1024 * 1024
 
